@@ -16,10 +16,12 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Ajustes")
                     .font(.largeTitle.bold())
                     .accessibilityAddTraits(.isHeader)
+                    .padding(.horizontal, 4)
+                    .padding(.bottom, 6)
 
                 section("Módulos") { modules }
                 section("Privacidade") { privacy }
@@ -32,6 +34,7 @@ struct SettingsView: View {
         }
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .scrollDismissesKeyboard(.interactively)
         .onChange(of: widgetShowValues) { _, _ in report = WidgetBridge.refresh() }
         .onAppear { report = WidgetBridge.lastReport }
@@ -39,90 +42,84 @@ struct SettingsView: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Overline(title)
+            SectionLabel(title)
             content()
         }
+        .padding(.top, 6)
     }
 
     // MARK: Módulos
 
     private struct ModuleRow: Identifiable {
         let name: String
-        let icon: String
-        let color: Color
         let phase: Int
         var id: String { name }
     }
 
     private let moduleRows: [ModuleRow] = [
-        .init(name: "Finanças", icon: "creditcard.fill", color: Theme.finance, phase: 1),
-        .init(name: "Treino e Saúde", icon: "dumbbell.fill", color: Theme.training, phase: 2),
-        .init(name: "Nutrição", icon: "fork.knife", color: Theme.nutrition, phase: 3),
-        .init(name: "Agenda", icon: "calendar", color: Theme.calendar, phase: 5),
-        .init(name: "E-mail", icon: "envelope.fill", color: Theme.mail, phase: 6),
-        .init(name: "Briefing e Siri", icon: "sparkles", color: Theme.accent, phase: 7)
+        .init(name: "Finanças", phase: 1),
+        .init(name: "Treino e Saúde", phase: 2),
+        .init(name: "Nutrição", phase: 3),
+        .init(name: "Migração do Fluxo e do Forja", phase: 4),
+        .init(name: "Agenda", phase: 5),
+        .init(name: "E-mail", phase: 6),
+        .init(name: "Briefing e Siri", phase: 7)
     ]
 
     private var modules: some View {
         VStack(spacing: 0) {
             ForEach(Array(moduleRows.enumerated()), id: \.element.id) { index, row in
-                if index > 0 { Divider() }
+                if index > 0 { RowDivider() }
                 HStack(spacing: 12) {
-                    Image(systemName: row.icon)
-                        .foregroundStyle(row.color)
-                        .frame(width: 28)
-                        .accessibilityHidden(true)
                     Text(row.name)
-                    Spacer()
+                        .font(.subheadline)
+                    Spacer(minLength: 8)
                     // Status sempre com ícone e texto, nunca só a cor.
-                    Label("Pendente · fase \(row.phase)", systemImage: "clock")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.textSecondary)
+                    StatusLabel(kind: .pending, text: "Pendente · fase \(row.phase)")
                 }
+                .padding(.horizontal, 16)
                 .frame(minHeight: Theme.minTouch)
                 .accessibilityElement(children: .combine)
             }
         }
-        .jarvisCard(padding: 14)
+        .jarvisListCard()
     }
 
     // MARK: Privacidade
 
     private var privacy: some View {
         VStack(spacing: 0) {
-            Toggle(isOn: loosening($requireAuth, reason: "Desligar o bloqueio do Jarvis")) {
-                Label("\(lock.biometryName) ao abrir", systemImage: lock.biometryIcon)
-            }
-            .frame(minHeight: Theme.minTouch)
-
-            Divider()
-
-            Picker(selection: lockDelayBinding) {
+            // "Ocultar" ligado é o estado protegido: desligar (mostrar valores) pede Face ID.
+            Toggle("Ocultar valores no widget", isOn: loosening(hideWidgetValues, reason: "Mostrar valores nos widgets"))
+                .modifier(SettingRow())
+            RowDivider()
+            Toggle("\(lock.biometryName) ao abrir", isOn: loosening($requireAuth, reason: "Desligar o bloqueio do Jarvis"))
+                .modifier(SettingRow())
+            RowDivider()
+            Picker("Bloquear", selection: lockDelayBinding) {
                 ForEach(LockDelay.allCases) { delay in
                     Text(delay.label).tag(delay.rawValue)
                 }
-            } label: {
-                Label("Bloquear", systemImage: "timer")
             }
-            .frame(minHeight: Theme.minTouch)
+            .modifier(SettingRow())
+            .tint(Theme.textSecondary)
             .disabled(!requireAuth)
-
-            Divider()
-
-            Toggle(isOn: loosening($shieldInSwitcher, reason: "Mostrar o Jarvis no alternador de apps")) {
-                Label("Proteger no alternador de apps", systemImage: "eye.slash")
-            }
-            .frame(minHeight: Theme.minTouch)
-
-            Divider()
-
-            // "Ocultar" ligado é o estado protegido: desligar (mostrar valores) pede Face ID.
-            Toggle(isOn: loosening(hideWidgetValues, reason: "Mostrar valores nos widgets")) {
-                Label("Ocultar valores no widget", systemImage: "lock.rectangle")
-            }
-            .frame(minHeight: Theme.minTouch)
+            RowDivider()
+            Toggle("Proteger no alternador de apps", isOn: loosening($shieldInSwitcher, reason: "Mostrar o Jarvis no alternador de apps"))
+                .modifier(SettingRow())
         }
-        .jarvisCard(padding: 14)
+        .tint(Theme.finance)   // interruptores verdes, como no canvas
+        .jarvisListCard()
+    }
+
+    /// Linha de ajuste: mesma margem e altura mínima de toque em todas.
+    private struct SettingRow: ViewModifier {
+        func body(content: Content) -> some View {
+            content
+                .font(.subheadline)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 48)
+        }
     }
 
     private var hideWidgetValues: Binding<Bool> {
@@ -189,7 +186,7 @@ struct SettingsView: View {
             }
             .buttonStyle(ModuleButtonStyle())
         }
-        .jarvisCard(padding: 14)
+        .jarvisCard()
         .onChange(of: testNote) { _, _ in justSaved = false }
         .sensoryFeedback(.success, trigger: justSaved) { _, new in new }
     }
@@ -198,7 +195,8 @@ struct SettingsView: View {
 // MARK: - Diagnóstico
 
 /// Mostra o que o app conseguiu de verdade neste aparelho: grupo, caminho de widget,
-/// última gravação e memória medida dentro do widget.
+/// última gravação e memória medida dentro do widget. Rótulo à esquerda e valor à
+/// direita, como no canvas; valores técnicos em fonte monoespaçada.
 private struct DiagnosticsCard: View {
     let report: WidgetBridge.Report?
 
@@ -206,79 +204,81 @@ private struct DiagnosticsCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            row("App Group",
-                value: container != nil ? "Ativo" : "Não concedido",
-                detail: container?.group ?? "Quem assinou o app não entregou o grupo. Use o Scriptable.",
-                ok: container != nil)
-            Divider()
-            row("Caminho de widget ativo",
-                value: container != nil ? "Nativo e Scriptable" : "Scriptable",
-                detail: container != nil ? "Os dois arquivos são gravados." : "Os widgets nativos não aparecem sem o App Group.",
-                ok: true)
-            Divider()
-            row("Última gravação",
-                value: report.map { $0.date.formatted(date: .abbreviated, time: .standard) } ?? "Nenhuma",
-                detail: writeDetail,
-                ok: report?.scriptableWritten ?? false)
-            Divider()
-            row("Arquivo do Scriptable",
-                value: WidgetBridge.scriptableFileExists ? "Gravado" : "Ausente",
-                detail: "Arquivos › No Meu iPhone › Jarvis › \(WidgetShared.fileName)",
-                ok: WidgetBridge.scriptableFileExists)
-            Divider()
-            row("Memória do widget",
-                value: memoryValue,
-                detail: memoryDetail,
-                ok: WidgetShared.readWidgetMemory() != nil)
-            Divider()
-            row("Identificador instalado",
-                value: Bundle.main.bundleIdentifier ?? "desconhecido",
-                detail: "Grupos procurados: " + WidgetShared.groupCandidates.joined(separator: ", "),
-                ok: true)
+            stacked("App Group ativo",
+                    value: container?.group ?? "não concedido pelo instalador",
+                    ok: container != nil)
+            RowDivider()
+            inline("Widgets",
+                   value: container != nil ? "Nativo e Scriptable" : "Scriptable (sem App Group)",
+                   color: container != nil ? Theme.finance : Theme.training,
+                   icon: container != nil ? "checkmark" : "exclamationmark.triangle.fill")
+            RowDivider()
+            inline("Última gravação do resumo",
+                   value: report.map { $0.date.formatted(date: .omitted, time: .standard) } ?? "nenhuma",
+                   color: Theme.textSecondary, icon: nil)
+            RowDivider()
+            inline("Arquivo do Scriptable",
+                   value: WidgetBridge.scriptableFileExists ? "Gravado" : "Ausente",
+                   color: WidgetBridge.scriptableFileExists ? Theme.finance : Theme.training,
+                   icon: WidgetBridge.scriptableFileExists ? "checkmark" : "exclamationmark.triangle.fill")
+            RowDivider()
+            inline("Memória do widget", value: memoryValue, color: Theme.textSecondary, icon: nil)
+            RowDivider()
+            stacked("Identificador instalado",
+                    value: Bundle.main.bundleIdentifier ?? "desconhecido",
+                    ok: nil)
         }
-        .jarvisCard(padding: 14)
-    }
-
-    private var writeDetail: String {
-        guard let report else { return "Abra a aba Hoje ou grave um texto de teste." }
-        let native = report.group != nil ? "nativo: sim" : "nativo: não"
-        let scriptable = report.scriptableWritten ? "Scriptable: sim" : "Scriptable: falhou"
-        return "\(native) · \(scriptable)"
+        .jarvisListCard()
     }
 
     private var memoryValue: String {
-        guard let memory = WidgetShared.readWidgetMemory() else { return "Sem medição" }
+        guard let memory = WidgetShared.readWidgetMemory() else {
+            return container == nil ? "exige o App Group" : "adicione o widget nativo"
+        }
         return ByteCountFormatter.string(fromByteCount: Int64(memory.availableBytes), countStyle: .memory) + " livres"
     }
 
-    private var memoryDetail: String {
-        if let memory = WidgetShared.readWidgetMemory() {
-            return "Medido no widget \(memory.family) em \(memory.recordedAt.formatted(date: .abbreviated, time: .shortened))."
+    /// Rótulo em cima e valor técnico embaixo (nomes longos não cabem lado a lado).
+    private func stacked(_ title: String, value: String, ok: Bool?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.footnote)
+                .foregroundStyle(Theme.textSecondary)
+            HStack(spacing: 6) {
+                if let ok {
+                    Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .font(.footnote)
+                        .foregroundStyle(ok ? Theme.finance : Theme.training)
+                        .accessibilityLabel(ok ? "Certo" : "Atenção")
+                }
+                Text(value)
+                    .font(.footnote.monospaced())
+                    .textSelection(.enabled)
+            }
         }
-        return container == nil
-            ? "A medição é feita dentro do widget nativo, que precisa do App Group."
-            : "Adicione o widget nativo do Jarvis à tela de início para medir."
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
 
-    private func row(_ title: String, value: String, detail: String, ok: Bool) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .foregroundStyle(ok ? Theme.finance : Theme.training)
-                .accessibilityLabel(ok ? "Certo" : "Atenção")
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.footnote)
-                    .foregroundStyle(Theme.textSecondary)
-                Text(value)
-                    .font(.subheadline.weight(.semibold))
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(Theme.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+    private func inline(_ title: String, value: String, color: Color, icon: String?) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+            Spacer(minLength: 8)
+            if let icon {
+                Image(systemName: icon)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(color)
+                    .accessibilityHidden(true)
             }
-            Spacer(minLength: 0)
+            Text(value)
+                .font(.subheadline)
+                .foregroundStyle(color)
+                .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .frame(minHeight: Theme.minTouch)
         .accessibilityElement(children: .combine)
     }
 }
@@ -322,6 +322,8 @@ private struct ScriptableGuide: View {
             }
             .font(.subheadline.weight(.semibold))
             .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .tint(Theme.accent)
 
             VStack(alignment: .leading, spacing: 8) {
                 step(1, "Instale o Scriptable pela App Store.")
@@ -333,7 +335,7 @@ private struct ScriptableGuide: View {
                 .font(.caption)
                 .foregroundStyle(Theme.textSecondary)
         }
-        .jarvisCard(padding: 14)
+        .jarvisCard()
         .sensoryFeedback(.success, trigger: copied) { _, new in new }
     }
 

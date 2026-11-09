@@ -17,7 +17,7 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $tab) {
             TodayView(open: { tab = $0 })
-                .tabItem { Label("Hoje", systemImage: "sun.max.fill") }
+                .tabItem { Label("Hoje", systemImage: "sparkles") }
                 .tag(AppTab.today)
 
             ModulePlaceholderView(module: .finance)
@@ -33,7 +33,7 @@ struct RootView: View {
                 .tag(AppTab.nutrition)
 
             ModulePlaceholderView(module: .assistant)
-                .tabItem { Label("Assistente", systemImage: "sparkles") }
+                .tabItem { Label("Assistente", systemImage: "bubble.left.fill") }
                 .tag(AppTab.assistant)
         }
         // Ao abrir a sessão, grava os arquivos de widget: assim a pasta do Jarvis

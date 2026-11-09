@@ -9,82 +9,102 @@ struct PendingModule {
     let color: Color
     let phase: Int
     let source: String
+    let summary: String
     let features: [String]
 
     static let finance = PendingModule(
-        overline: "Fase 1", title: "Finanças", icon: "creditcard.fill", color: Theme.finance, phase: 1,
-        source: "Vem do Fluxo",
+        overline: "Vem do Fluxo", title: "Finanças", icon: "creditcard.fill", color: Theme.finance, phase: 1,
+        source: "Fluxo",
+        summary: "Saldo estimado, quanto pode gastar por dia, fatura do cartão e transações.",
         features: ["Open Finance pelo Meu Pluggy", "Cofre cifrado e categorias", "Orçamentos e fluxo de caixa",
                    "Cartão com faturas por ciclo", "Investimentos"])
 
     static let training = PendingModule(
-        overline: "Fase 2", title: "Treino", icon: "dumbbell.fill", color: Theme.training, phase: 2,
-        source: "Vem do Forja",
+        overline: "Vem do Forja", title: "Treino", icon: "dumbbell.fill", color: Theme.training, phase: 2,
+        source: "Forja",
+        summary: "A semana em 7 círculos, o treino do dia com cargas e a sugestão de progressão.",
         features: ["Gerador de fichas por regras", "Execução com carga e repetições", "Progresso e Apple Watch",
-                   "Academia e catálogo de exercícios", "Coach de saúde"])
+                   "Academia e catálogo de exercícios"])
 
     static let nutrition = PendingModule(
-        overline: "Fase 3", title: "Nutrição", icon: "fork.knife", color: Theme.nutrition, phase: 3,
-        source: "Vem do Forja",
+        overline: "Vem do Forja", title: "Nutrição", icon: "fork.knife", color: Theme.nutrition, phase: 3,
+        source: "Forja",
+        summary: "Anel de calorias restantes, proteína, carboidratos e gorduras, e as refeições do dia.",
         features: ["Diário com a tabela TACO", "Prato por foto", "Metas de calorias e proteína", "Dicas por regra"])
 
     static let assistant = PendingModule(
-        overline: "Fases 1 e 2", title: "Assistente", icon: "sparkles", color: Theme.accent, phase: 1,
-        source: "Agente do Fluxo e Coach do Forja",
-        features: ["Seletor Finanças | Saúde", "Propostas aplicadas só após Confirmar",
-                   "Registro auditável do que vai à IA"])
+        overline: "Fluxo e Forja", title: "Assistente", icon: "bubble.left.fill", color: Theme.accent, phase: 1,
+        source: "agente do Fluxo e Coach do Forja",
+        summary: "Uma conversa com seletor Finanças | Saúde. Cada lado mantém as suas travas.",
+        features: ["Propostas aplicadas só após Confirmar", "Registro auditável do que vai à IA",
+                   "Coach restrito a treino, alimentação, sono e recuperação"])
 }
 
-/// Aba vazia, já com o visual do Jarvis: título grande, cartão e a lista do que virá.
+/// Aba vazia, já com o visual do Jarvis: cabeçalho, cartão de destaque e o que virá.
 struct ModulePlaceholderView: View {
     let module: PendingModule
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Overline(module.overline)
                     Text(module.title)
                         .font(.largeTitle.bold())
                         .accessibilityAddTraits(.isHeader)
                 }
-                .padding(.top, 8)
+                .padding(.horizontal, 4)
+                .padding(.bottom, 4)
 
+                // Destaque: o que esta aba vai mostrar.
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(spacing: 12) {
-                        Image(systemName: module.icon)
-                            .font(.title2)
-                            .foregroundStyle(module.color)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.cardInner, in: RoundedRectangle(cornerRadius: Theme.innerRadius, style: .continuous))
-                            .accessibilityHidden(true)
+                        IconChip(systemName: module.icon, color: module.color, size: 44)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Módulo ainda não instalado")
-                                .font(.headline)
-                            Label("Pendente · \(module.source)", systemImage: "clock")
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.textSecondary)
+                            Text("Fase \(module.phase)")
+                                .font(.caption.weight(.bold))
+                                .tracking(0.3)
+                                .textCase(.uppercase)
+                                .foregroundStyle(module.color)
+                            Text("Ainda não instalado")
+                                .font(.title3.bold())
                         }
                     }
-
-                    VStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(module.features.enumerated()), id: \.offset) { index, feature in
-                            if index > 0 { Divider() }
-                            Label(feature, systemImage: "circle.dashed")
-                                .font(.subheadline)
-                                .frame(maxWidth: .infinity, minHeight: Theme.minTouch, alignment: .leading)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .background(Theme.cardInner, in: RoundedRectangle(cornerRadius: Theme.innerRadius, style: .continuous))
+                    Text(module.summary)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ProgressTrack(fraction: nil, color: module.color, height: 8)
                 }
                 .jarvisCard()
 
-                Text("Esta aba recebe o conteúdo quando a fase \(module.phase) for entregue.")
+                // O que vem junto, em linhas separadas por fios, como as listas do canvas.
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(module.features.enumerated()), id: \.offset) { index, feature in
+                        if index > 0 { RowDivider() }
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(module.color)
+                                .frame(width: 8, height: 8)
+                                .accessibilityHidden(true)
+                            Text(feature)
+                                .font(.subheadline)
+                            Spacer(minLength: 0)
+                        }
+                        .frame(minHeight: Theme.minTouch)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
+                .jarvisListCard()
+
+                Text("O código vem do \(module.source), já testado, e é adaptado ao Jarvis.")
                     .font(.footnote)
                     .foregroundStyle(Theme.textSecondary)
+                    .padding(.horizontal, 4)
             }
             .padding(.horizontal, Theme.margin)
+            .padding(.top, 8)
             .padding(.bottom, 24)
         }
         .background(Theme.background)

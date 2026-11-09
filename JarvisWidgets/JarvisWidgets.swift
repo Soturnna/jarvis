@@ -43,7 +43,7 @@ struct PanelWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "jarvis.painel", provider: JarvisProvider()) { entry in
             PanelWidgetView(entry: entry)
-                .containerBackground(for: .widget) { Color.black }
+                .containerBackground(for: .widget) { Color(hex: 0x1C1C1E) }   // cartão, como no canvas
                 .widgetURL(URL(string: "jarvis://hoje"))
         }
         .configurationDisplayName("Painel")
@@ -56,28 +56,31 @@ struct PanelWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: JarvisEntry
 
+    private var onLockScreen: Bool { family == .accessoryRectangular }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
                 Image(systemName: "sparkles")
-                Text("JARVIS")
+                Text("Jarvis")
             }
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(family == .accessoryRectangular ? Color.primary : Color(hex: 0x64D2FF))
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(onLockScreen ? Color.primary : Color(hex: 0x64D2FF))
 
             Text(message)
-                .font(family == .accessoryRectangular ? .footnote : .subheadline.weight(.semibold))
-                .foregroundStyle(family == .accessoryRectangular ? Color.primary : Color.white)
-                .lineLimit(family == .systemSmall ? 4 : 3)
-                .minimumScaleFactor(0.8)
+                .font(onLockScreen ? .footnote : .footnote.weight(.medium))
+                .foregroundStyle(onLockScreen ? Color.primary : Color(hex: 0xF2F2F7))
+                .lineSpacing(2)
+                .lineLimit(family == .systemSmall ? 5 : 3)
+                .minimumScaleFactor(0.85)
 
-            if family != .accessoryRectangular { Spacer(minLength: 0) }
+            if !onLockScreen { Spacer(minLength: 0) }
 
-            // Toda entrada mostra a hora da última atualização.
+            // Todo widget mostra a hora da última atualização.
             if let updatedAt = entry.envelope?.updatedAt {
-                (Text("Atualizado ") + Text(updatedAt, style: .time))
+                Text("Atualizado às \(updatedAt.formatted(date: .omitted, time: .shortened))")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(onLockScreen ? Color.secondary : Color(hex: 0xA1A1AA))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

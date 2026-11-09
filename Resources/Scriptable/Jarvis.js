@@ -30,7 +30,7 @@ const COR = {
   cartao: new Color("#1C1C1E"),
   interno: new Color("#2C2C2E"),
   destaque: new Color("#64D2FF"),
-  texto: new Color("#FFFFFF"),
+  texto: new Color("#F2F2F7"),
   secundario: new Color("#A1A1AA"),
   alerta: new Color("#FF9F0A"),
 }
@@ -87,29 +87,27 @@ function simbolo(pilha, nome, tamanho, cor) {
   return img
 }
 
-/** Rótulo pequeno em maiúsculas, como no app. */
+/** Cabeçalho do widget: ícone e nome na cor de destaque, como no canvas. */
 function sobretitulo(pilha, t) {
   const linha = pilha.addStack()
   linha.centerAlignContent()
-  simbolo(linha, "sparkles", 11, COR.destaque)
+  simbolo(linha, "sparkles", 13, COR.destaque)
   linha.addSpacer(4)
-  texto(linha, t.toUpperCase(), Font.boldSystemFont(10), COR.destaque, 1)
+  texto(linha, t, Font.semiboldSystemFont(12), COR.destaque, 1)
 }
 
 /** Rodapé presente em todos os widgets: a hora da última atualização. */
 function rodape(pilha, d) {
   const linha = pilha.addStack()
   linha.centerAlignContent()
-  simbolo(linha, "arrow.clockwise", 9, COR.secundario)
-  linha.addSpacer(3)
-  texto(linha, "Atualizado " + horaDaAtualizacao(d.updatedAt), Font.mediumSystemFont(10), COR.secundario, 1)
+  texto(linha, "Atualizado às " + horaDaAtualizacao(d.updatedAt), Font.systemFont(11), COR.secundario, 1)
 }
 
 // ---------- Widgets por tamanho ----------
 
 function widgetAviso(erro) {
   const w = new ListWidget()
-  w.backgroundColor = COR.fundo
+  w.backgroundColor = COR.cartao
   const msg = {
     semPasta: ["Conecte a pasta do Jarvis", "Scriptable › Ajustes › File Bookmarks › escolha a pasta Jarvis e dê o nome “Jarvis”."],
     semArquivo: ["Abra o Jarvis uma vez", "O resumo é gravado quando o app abre."],
@@ -130,13 +128,13 @@ function widgetAviso(erro) {
 
 function widgetPainel(d, linhas, tamanhoFonte) {
   const w = new ListWidget()
-  w.backgroundColor = COR.fundo
+  w.backgroundColor = COR.cartao
   w.setPadding(14, 16, 12, 16)
   w.url = "jarvis://hoje"
   sobretitulo(w, "Jarvis")
   w.addSpacer(6)
   if (d.note) {
-    texto(w, d.note, Font.semiboldSystemFont(tamanhoFonte), COR.texto, linhas)
+    texto(w, d.note, Font.mediumSystemFont(tamanhoFonte), COR.texto, linhas)
   } else {
     texto(w, "Sem texto de teste. Grave um em Ajustes.", Font.systemFont(tamanhoFonte - 1), COR.secundario, linhas)
   }
@@ -155,7 +153,7 @@ function widgetRetangular(d) {
   t.addSpacer(4)
   texto(t, "Jarvis", Font.boldSystemFont(14), Color.white(), 1)
   texto(w, d.note || "Sem texto de teste", Font.mediumSystemFont(12), new Color("#FFFFFF", 0.8), 1)
-  texto(w, "Atualizado " + horaDaAtualizacao(d.updatedAt), Font.mediumSystemFont(12), new Color("#FFFFFF", 0.8), 1)
+  texto(w, "Atualizado às " + horaDaAtualizacao(d.updatedAt), Font.mediumSystemFont(12), new Color("#FFFFFF", 0.8), 1)
   return w
 }
 
@@ -189,12 +187,12 @@ function widgetLinha(d) {
 const dados = lerDados()
 let widget
 if (dados.erro) widget = widgetAviso(dados.erro)
-else if (familia === "small") widget = widgetPainel(dados, 4, 14)
+else if (familia === "small") widget = widgetPainel(dados, 5, 13)
 else if (familia === "large") widget = widgetPainel(dados, 10, 17)
 else if (familia === "accessoryCircular") widget = widgetCircular(dados)
 else if (familia === "accessoryRectangular") widget = widgetRetangular(dados)
 else if (familia === "accessoryInline") widget = widgetLinha(dados)
-else widget = widgetPainel(dados, 3, 15)
+else widget = widgetPainel(dados, 3, 14)
 
 // Pede ao iOS para redesenhar em ~15 min (ele decide o momento exato).
 widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000)

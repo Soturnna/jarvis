@@ -107,6 +107,25 @@ Decisões tomadas durante a construção, quando o documento de especificação 
 - **Sem workflow de testes ainda.** Ele entra na fase 1, junto com os testes do Fluxo.
 - **`PROGRESSO.md` não dispara compilação.** Alterar só esse arquivo não gera um `.ipa` novo.
 
+### Fase 0, revisão visual
+
+Referência: o canvas "Jarvis — Aparência do app e widgets" e as diretrizes da Apple (HIG).
+
+- **Cabeçalho da aba Hoje no conteúdo.** Data, título e os botões Atualizar e Perfil ficam na mesma
+  linha, como no canvas; a barra de navegação fica oculta nessa aba.
+- **Vidro só nos controles.** O botão Atualizar e a barra de abas usam Liquid Glass (iOS 26); os
+  cartões usam cores de fundo do sistema. Antes do iOS 26, o botão usa um material padrão.
+- **Cartões sem dados inventados.** Enquanto um módulo não existe, o cartão já tem a forma final,
+  mostra "—" no lugar do valor e informa a fase em que chega.
+- **Ajustes como listas agrupadas.** Linhas de borda a borda separadas por fios, rótulo à esquerda e
+  estado à direita com ícone e texto; valores técnicos do Diagnóstico em fonte monoespaçada.
+- **Botões principais em cápsula**, com resposta ao toque (escurece e encolhe 2%; sem encolher quando
+  "Reduzir movimento" está ligado).
+- **Ícones das abas iguais aos do canvas.** Hoje usa o brilho (`sparkles`) e Assistente usa o balão.
+  Nutrição mantém `fork.knife`, porque o SF Symbols não tem uma maçã genérica.
+- **Widgets com fundo de cartão** (`#1C1C1E`) e rodapé "Atualizado às HH:MM".
+- **Gravação ao sair do app.** O resumo é regravado quando o app vai para o segundo plano.
+
 ### Ponto a verificar na fase 1
 
 A chave do cofre fica no Keychain. Não foi verificado se o Keychain continua legível quando o

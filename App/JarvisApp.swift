@@ -56,6 +56,9 @@ struct AppRoot: View {
             } else if shieldInSwitcher {
                 shield.show()
             }
+            // Ao sair do app, o resumo é gravado de novo: o widget passa a refletir
+            // o que acabou de ser feito (um gasto, um treino concluído).
+            if phase == .background && lock.sessionStarted { WidgetBridge.refresh() }
         }
         .onChange(of: lock.isLocked, initial: true) { _, locked in
             if locked {
